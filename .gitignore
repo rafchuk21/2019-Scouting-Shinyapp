@@ -37,4 +37,4 @@ rsconnect/
 .Rproj.user
 
 #no data sharing, sorry :(
-.csv
+*.csv
