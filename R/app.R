@@ -17,6 +17,11 @@ ui <- fluidPage(
    sidebarLayout(
      sidebarPanel(
        fileInput("file", "Scouting csv File"),
+       fileInput("matchSchedule", "Match Schedule csv File"),
+       conditionalPanel(
+         condition = "output.displayMatchSched",
+         textInput("matchSelection", "Match #")
+       ),
        checkboxGroupInput("displayType", "Display", choices = list(
          "Table" = 1, "Histogram" = 2, "Violin Plot" = 3)),
        conditionalPanel(
@@ -73,6 +78,13 @@ server <- function(input, output) {
     return(funComputeNewColumns(data))
   })
   
+  matchSchedule <- reactive({
+    if (is.null(input$matchSchedule$datapath)) { return(NULL)}
+    matchSched <- read.csv(input$matchSchedule$datapath)
+    if (is.null(data)) { return(NULL) }
+    return (matchSched)
+  })
+  
   teamList <- reactive({
     if (fileLoaded())
       return(funTeamList(finalData()))
@@ -102,6 +114,13 @@ server <- function(input, output) {
   
   fileLoaded <- reactive({
     !is.null(finalData())
+  })
+  
+  displayMatchSched <- reactive ({
+    !is.null(matchSchedule())
+  })
+  output$displayMatchSched <- reactive ({
+    displayMatchSched()
   })
   
   displayTable <- reactive ({
@@ -138,6 +157,7 @@ server <- function(input, output) {
     return(displayHistogram() | displayViolinPlot())
   })
   
+  outputOptions(output, "displayMatchSched", suspendWhenHidden = FALSE)
   outputOptions(output, "displayTable", suspendWhenHidden = FALSE)
   outputOptions(output, "displayHistogram", suspendWhenHidden = FALSE)
   outputOptions(output, "displayViolinPlot", suspendWhenHidden = FALSE)
@@ -187,8 +207,18 @@ server <- function(input, output) {
   outputOptions(output, "singleTeamSelector", suspendWhenHidden = FALSE)
   outputOptions(output, "multiTeamSelector", suspendWhenHidden = FALSE)
   
+  matchSelection <- reactive({
+    selection <- as.numeric(input$matchSelection)
+    if (is.null(selection)) { return(NULL) }
+    print(selection)
+    if (is.na(selection) | selection < 1 | selection > nrow(matchSchedule())) { return(NULL) }
+    teams <- as.numeric(matchSchedule()[input$matchSelection,])
+    print(teams)
+    return(teams)
+  })
+  
   multiTeamSelectorResult <- reactive({
-    c(input$multiTeamSelection1, input$multiTeamSelection2)
+    unique(c(input$multiTeamSelection1, input$multiTeamSelection2, matchSelection()), fromLast = TRUE)
   })
   
   output$histograms <- renderUI({
@@ -231,8 +261,11 @@ server <- function(input, output) {
     variable <- input$plotVariables #variable to plot on violin plot
     violinPlotTeams <- multiTeamSelectorResult() #teams to plot on violin plot
     data <- finalData()
-    
-    return(multiTeamViolinPlot(data, violinPlotTeams, variable))
+    order <- NULL
+    if (!is.null(matchSelection())) {
+      order <- 1:violinPlotTeams
+    }
+    return(multiTeamViolinPlot(data, violinPlotTeams, variable, order = order))
   })
 }
 

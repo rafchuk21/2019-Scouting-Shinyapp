@@ -25,6 +25,7 @@ funComputeNewColumns <- function(data) {
 #   contains the median of the team's values in the given column. If non-numeric, 0.
 # data - event data. Needs a column named "team.."
 funComputeMedians <- function(data) {
+  if (nrow(data) < 1) {return(NULL)}
   tl <- funTeamList(data) # team list from data
   cn <- colnames(data) # column names of data
   
