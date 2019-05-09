@@ -18,6 +18,7 @@ funComputeNewColumns <- function(data) {
   data$total.hatches <- data$ship.hatches + data$total.rocket.hatches
   data$total.gamepieces <- data$total.hatches + data$total.cargo
   data$total.gamepiece.points <- data$total.cargo * 3 + data$total.hatches * 2
+  data$hab.points <- ifelse(data$hab.level.reached == 3, 12, data$hab.level.reached * 3)
   return(data)
 }
 
