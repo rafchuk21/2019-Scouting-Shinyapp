@@ -209,7 +209,7 @@ server <- function(input, output) {
   
   matchSelection <- reactive({
     selection <- as.numeric(input$matchSelection)
-    if (is.null(selection)) { return(NULL) }
+    if (length(selection) == 0 | is.na(selection)) { return(NULL) }
     print(selection)
     if (is.na(selection) | selection < 1 | selection > nrow(matchSchedule())) { return(NULL) }
     teams <- as.numeric(matchSchedule()[input$matchSelection,])
