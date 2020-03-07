@@ -207,17 +207,20 @@ server <- function(input, output) {
   outputOptions(output, "singleTeamSelector", suspendWhenHidden = FALSE)
   outputOptions(output, "multiTeamSelector", suspendWhenHidden = FALSE)
   
+  # Returns NULL if no match selected, otherwise returns teams participating in match
   matchSelection <- reactive({
     selection <- as.numeric(input$matchSelection)
     if (length(selection) == 0 | is.na(selection)) { return(NULL) }
     print(selection)
     if (is.na(selection) | selection < 1 | selection > nrow(matchSchedule())) { return(NULL) }
-    teams <- as.numeric(matchSchedule()[input$matchSelection,])
+    teams <- as.numeric(matchSchedule()[input$matchSelection, c('R1', 'R2', 'R3', 'B1', 'B2', 'B3')])
     print(teams)
     return(teams)
   })
   
   multiTeamSelectorResult <- reactive({
+    # Combine selections from 2 selection columns and from match selection, eliminating duplicates
+    # Match selection appearances take priority
     unique(c(input$multiTeamSelection1, input$multiTeamSelection2, matchSelection()), fromLast = TRUE)
   })
   
@@ -262,8 +265,8 @@ server <- function(input, output) {
     violinPlotTeams <- multiTeamSelectorResult() #teams to plot on violin plot
     data <- finalData()
     order <- NULL
-    if (!is.null(matchSelection())) {
-      order <- 1:violinPlotTeams
+    if (!is.null(matchSelection())) { # If a match is selected, order is by alliance station order for match participants and by number otherwise
+      order <- 1:length(violinPlotTeams)
     }
     return(multiTeamViolinPlot(data, violinPlotTeams, variable, order = order))
   })
